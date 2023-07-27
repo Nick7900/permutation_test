@@ -76,12 +76,27 @@ def load_files(data_folder, file_name, file_type, delimiter=' '):
         data = pd.read_csv(file_path + file_name + file_type, delimiter=delimiter, header=None)
         return data
     
+def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, title_text="", annot=True, cmap='coolwarm', xlabel=None, ylabel=None):
+    """
+    Plot a heatmap of p-values.
 
-# Assuming you have a 2D array or DataFrame called 'p_values' with shape (n, m)
-# Set up the figure and axes
+    Args:
+        pval (numpy.ndarray): The p-values data to be plotted.
+        method (str): The method used for the permutation test. Should be one of 'regression', 'correlation', or 'correlation_com'.
+        normalize_vals (bool, optional): If True, the data range will be normalized from 0 to 1. Default is True.
+        figsize (tuple, optional): Figure size in inches (width, height). Default is (12, 7).
+        steps (int, optional): Number of steps for x and y-axis ticks. Default is 11.
+        title_text (str, optional): Title text for the heatmap. If not provided, a default title will be used.
+        annot (bool, optional): If True, annotate each cell with the numeric value. Default is True.
+        cmap (str, optional): Colormap to use. Default is 'coolwarm'.
+        xlabel (str, optional): X-axis label. If not provided, default labels based on the method will be used.
+        ylabel (str, optional): Y-axis label. If not provided, default labels based on the method will be used.
 
+    Returns:
+        None (Displays the heatmap plot).
 
-def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, title_text="", annot=True, cmap='coolwarm', xlabel=None,ylabel=None):
+    """
+
     fig, ax = plt.subplots(figsize=figsize)
 
     if normalize_vals:
@@ -93,20 +108,20 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
 
     # Add labels and title
     if method == "regression":
-        if xlabel==None:
+        if xlabel is None:
             ax.set_xlabel('Features', fontsize=12)
         else:
             ax.set_xlabel(xlabel, fontsize=12)
-        if ylabel==None:
+        if ylabel is None:
             ax.set_ylabel('Time', fontsize=12)
         else:
             ax.set_ylabel(ylabel, fontsize=12)
     else:
-        if xlabel==None:
+        if xlabel is None:
             ax.set_xlabel('Predictors', fontsize=12)
         else: 
             ax.set_xlabel(xlabel, fontsize=12)
-        if ylabel==None:
+        if ylabel is None:
             ax.set_ylabel('Features', fontsize=12)
         else:
             ax.set_ylabel(ylabel, fontsize=12)
@@ -133,8 +148,6 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
 
     # Show the plot
     plt.show()
-
-
 
   
 def plot_histograms(test_statistic, title_text=""):
