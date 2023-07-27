@@ -712,7 +712,7 @@ def test_statistic_calculations(Xin, D_data, perm, pval_perms, test_statistic, p
     """
     if method == 'regression':
         beta = np.dot(proj, Xin)
-        test_statistic[perm] = np.sqrt(np.sum((D_data.dot(beta) - Xin) ** 2, axis=0))
+        test_statistic[perm,:] = np.sqrt(np.sum((D_data.dot(beta) - Xin) ** 2, axis=0))
     elif method == 'correlation':
         corr_coef = np.corrcoef(Xin, D_data, rowvar=False)
         corr_matrix = corr_coef[:Xin.shape[1], Xin.shape[1]:]
