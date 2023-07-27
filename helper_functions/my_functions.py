@@ -220,17 +220,17 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
     if not title_text:
         ax.set_title(f'Scatter Plot of P-values, alpha={alpha}', fontsize=14, fontname='serif')
     else:
-        ax.set_title(title_text, fontsize=14)
+        ax.set_title(title_text, fontsize=14, fontname='serif')
 
     if xlabel is None:
         ax.set_xlabel('Index', fontsize=12, fontname='serif')
     else:
-        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_xlabel(xlabel, fontsize=12, fontname='serif')
 
     if ylabel is None:
         ax.set_ylabel('-log10(p-values)', fontsize=12, fontname='serif')
     else:
-        ax.set_ylabel(ylabel, fontsize=12)
+        ax.set_ylabel(ylabel, fontsize=12, fontname='serif')
 
     # Add text labels for indices where the mask is True
     for i, m in enumerate(mask):
