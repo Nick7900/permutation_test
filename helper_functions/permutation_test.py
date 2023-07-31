@@ -50,9 +50,9 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
                                 Depending on the `test_statistic_option` and `method`, the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
-                                corr_coef (numpy array): Corrected p-values for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
+                                corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
                                 test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) if test_statistic_option is True, else None.
-                                pval_list (numpy array): P-values for permutations (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
+                                pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
         
 
     Note:
@@ -62,9 +62,9 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
                                   
     Returns:
         pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
-        corr_coef (numpy array): Corrected p-values for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
+        corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
         test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) if test_statistic_option is True, else None.
-        pval_list (numpy array): P-values for permutations (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
+        pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
         
     Example:
         X_data = np.random.rand(100, 3)  # Simulated brain activity data (3 features)
@@ -185,9 +185,9 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
                                 Depending on the `test_statistic_option` and `method`, the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
-                                corr_coef (numpy array): Corrected p-values for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
+                                corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
                                 test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) if test_statistic_option is True, else None.
-                                pval_list (numpy array): P-values for permutations (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
+                                pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
         
 
     Note:
@@ -286,9 +286,9 @@ def within_session_continuous_test(vpath_data, D_data, n_states, method="regress
                                 Depending on the `test_statistic_option` and `method`, the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
-                                corr_coef (numpy array): Corrected p-values for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
+                                corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
                                 test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) if test_statistic_option is True, else None.
-                                pval_list (numpy array): P-values for permutations (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
+                                pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
 
     Note:
         The function assumes that the number of rows in `vpath_data` and `D_data` are equal
@@ -455,7 +455,7 @@ def initialize_arrays(X_data, n_features, n_predictions, n_timepoints, method, N
         pval (numpy array): p-values for the test (n_timepoints, n_features) if test_statistic_option is False, else None.
         corr_coef (numpy array): Correlation coefficient for the test (n_timepoints, n_features, n_predictions) if method=correlation or method = correlation_com, else None.
         test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) or (n_timepoints, Nperm, n_features, n_predictions) if method=correlation or method = correlation_com, else None.
-        pval_list (numpy array): P-values for permutations (n_timepoints, Nperm, n_features) or (n_timepoints, Nperm, n_features, n_predictions) if test_statistic_option is True and method is "correlation_com", else None.
+        pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) or (n_timepoints, Nperm, n_features, n_predictions) if test_statistic_option is True and method is "correlation_com", else None.
     """
 
     # Initialize the arrays based on the selected method and data dimensions
