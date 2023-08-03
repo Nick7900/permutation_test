@@ -4,8 +4,6 @@ import numpy as np
 import os
 import scipy.io
 import pandas as pd
-import mat73
-from statsmodels.stats import multitest as smt
 import matplotlib.colors as colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -31,6 +29,7 @@ def create_folder(folder_name):
         print("Folder already exists:", folder_name)
 
 def load_files(data_folder, file_name, file_type, delimiter=' '):
+    import mat73
     """
     Load files from a specified data folder.
 
@@ -389,6 +388,7 @@ def get_timestamp_indices(n_timestamps, n_subjects):
 
 
 def pval_test(pval, method='fdr_bh', alpha = 0.05):
+    from statsmodels.stats import multitest as smt
     """
     This function performs multiple thresholding and correction for a 2D numpy array of p-values.
 
@@ -456,5 +456,3 @@ def compare_p_values(p_values, p_values_corrected, threshold=0.05):
     not_similar_indices = np.setxor1d(significant_indices, significant_indices_corrected)
 
     return similar_indices, not_similar_indices
-
-
