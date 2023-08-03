@@ -5,7 +5,7 @@ from scipy.stats import pearsonr
 np.seterr(divide='ignore', invalid='ignore')
 
 
-def between_subject_test(X_data, D_data, idx_data=None, method="regression", Nperm=1000, confounds = None, exchangeable=False,test_statistic_option=False):
+def between_subject_test(X_data, D_data, idx_data=None, method="regression", Nperm=1000, confounds = None, exchangeable=True,test_statistic_option=False):
     """
     Perform between-subject permutation testing.
     This function conducts statistical tests (regression, correlation, or correlation_com) between two datasets, `X_data`
@@ -83,16 +83,16 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
     )
     # idx_trial is by default None
     idx_trial = None
-    if exchangeable:
+    if exchangeable==False:
         if idx_data is None:
-            raise ValueError("Warning: Indices for each subject are not provided, prohibiting exchangeable permutation between subjects.")
+            raise ValueError("Warning: Indices for each subject are not provided, prohibiting permutation between subjects when exchangeable is False.")
         # Get indices for permutation
         if len(idx_data.shape)==2:
             idx_array = get_indices_array(idx_data)
             
         n_trial_subject, trial_per_subject = np.unique(idx_data, return_counts=True)
         if len(set(trial_per_subject)) != 1:
-            raise ValueError("Warning: Unequal number of trials per subject prohibits exchangeable permutation between subjects.")
+            raise ValueError("Warning: Unequal number of trials per subject prohibs permutation between subjects when exchangeable is False.")
         # Get the number of trials per subject
         idx_trial = np.arange(0, trial_per_subject[0] * len(n_trial_subject), trial_per_subject[0])
 
@@ -514,7 +514,7 @@ def calculate_X_t(X_data, confounds=None):
     return X_t
 
 
-def between_subject_indices(Nperm, X_t, indices=False, exchangeable=False):
+def between_subject_indices(Nperm, X_t, indices=False, exchangeable=True):
     """
     Generates between-subject indices for permutation testing.
 
@@ -531,7 +531,7 @@ def between_subject_indices(Nperm, X_t, indices=False, exchangeable=False):
     for perm in range(Nperm):
         if perm == 0:
             permute_idx_list[perm] = np.arange(X_t.shape[0])
-        elif perm > 0 and exchangeable:
+        elif perm > 0 and exchangeable==False:
             for t in range(np.diff(indices)[0]):
                 idx_t = [i + t for i in indices]
                 idx_t_perm = np.random.permutation(idx_t)
