@@ -242,8 +242,8 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
     ax.legend(title="Significance", loc="upper right", fontsize=10, bbox_to_anchor=(1.25, 1))
 
     # Set axis limits to focus on the relevant data range
-    ax.set_xlim(-5, len(p_values))
-    ax.set_ylim(-0.1, np.max(-np.log10(p_values)) * 1.2)
+    ax.set_xlim(xlim_start, len(p_values))
+    ax.set_ylim(ylim_start, np.max(-np.log10(p_values)) * 1.2)
 
     # Customize plot background and grid style
     sns.set_style("white")
