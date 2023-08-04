@@ -97,6 +97,8 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
     """
 
     fig, ax = plt.subplots(figsize=figsize)
+    if len(pval.shape)==1:
+        pval =np.expand_dims(pval,axis=0)
 
     if normalize_vals:
         # Normalize the data range from 0 to 1
