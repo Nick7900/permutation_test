@@ -47,7 +47,7 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
                                 (default: False) 
                                 
     Returns (numpy.ndarray or tuple: 
-                                Depending on the `test_statistic_option` and `method`, the p-values, 
+                                Depending on the `test_statistic_option` and `method`, it can return the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
                                 corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
@@ -182,7 +182,7 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
                                 
                                 
     Returns (numpy.ndarray or tuple: 
-                                Depending on the `test_statistic_option` and `method`, the p-values, 
+                                Depending on the `test_statistic_option` and `method`, it can return the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
                                 corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
@@ -283,7 +283,7 @@ def within_session_continuous_test(vpath_data, D_data, n_states, method="regress
                                 
                                 
     Returns (numpy.ndarray or tuple: 
-                                Depending on the `test_statistic_option` and `method`, the p-values, 
+                                Depending on the `test_statistic_option` and `method`, it can return the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
                                 corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
