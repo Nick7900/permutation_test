@@ -230,7 +230,8 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
         # If confounds exist, perform confound regression
         X_t = calculate_X_t(X_data[t, :], confounds)
 
-        for perm in range(Nperm):
+        #for perm in range(Nperm):
+        for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
             # Perform permutation on X_t
             Xin = within_session_between_trial(X_t, idx_array, perm)
             test_statistic, pval_perms = test_statistic_calculations(Xin, D_data[t, :], perm, pval_perms, test_statistic, proj, method)
