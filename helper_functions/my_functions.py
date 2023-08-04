@@ -181,7 +181,7 @@ def plot_histograms(test_statistic, title_text=""):
     plt.show()
 
 
-def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, ylabel=None, xlim_start =-5,ylim=-0.1):
+def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, ylabel=None, xlim_start =-5,ylim_start=-0.1):
     """
     Create a scatter plot to visualize p-values with labels indicating significant points.
 
