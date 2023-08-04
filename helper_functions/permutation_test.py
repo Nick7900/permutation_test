@@ -5,11 +5,11 @@ from scipy.stats import pearsonr
 np.seterr(divide='ignore', invalid='ignore')
 
 
-def between_subject_test(X_data, D_data, idx_data=None, method="regression", Nperm=1000, confounds = None, exchangeable=True,test_statistic_option=False):
+def between_subject_test(X_data, y_data, idx_data=None, method="regression", Nperm=1000, confounds = None, exchangeable=True,test_statistic_option=False):
     """
     Perform between-subject permutation testing.
     This function conducts statistical tests (regression, correlation, or correlation_com) between two datasets, `X_data`
-    representing the measured data and `D_data` representing the dependent-variable/Design-matrix, across different subjects using
+    representing the measured data and `y_data` representing the dependent-variable, across different subjects using
     permutation testing. 
     The goal is to assess the statistical significance of relationships the measured data and
     the dependent variable in a between-subject design.
@@ -23,7 +23,7 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
                                 represents timepoints, the second dimension represents the number of subjects or trials, 
                                 and the third dimension represents features. 
                                 In the latter case, permutation testing is performed per timepoint for each subject.              
-        D_data (numpy.ndarray): The dependent-variable or Design-matrix that can be either a 2D array or a 3D array. 
+        y_data (numpy.ndarray): The dependent-variable can be either a 2D array or a 3D array. 
                                 For 2D array, it got a shape of (n_ST, n_predictions), where n_ST represent 
                                 the number of subjects or trials, and each column represents a dependent variable
                                 For a 3D array,it got a shape (n_timepoints, n_ST, n_predictions), where the first dimension 
@@ -58,7 +58,7 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
     Note:
         - The function automatically determines whether permutation testing is performed per timepoint for each subject or
           for the whole data based on the dimensionality of `X_data`.
-        - The function assumes that the number of rows in `X_data` and `D_data` are equal
+        - The function assumes that the number of rows in `X_data` and `y_data` are equal
                                   
     Returns:
         pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
@@ -68,8 +68,8 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
         
     Example:
         X_data = np.random.rand(100, 3)  # Simulated brain activity data (3 features)
-        D_data = np.random.rand(100, 1)  # Simulated dependent variable data (1 variable)
-        pval, test_statistic_list = between_subject_test(X_data, D_data, method="regression", Nperm=1000,
+        y_data = np.random.rand(100, 1)  # Simulated dependent variable data (1 variable)
+        pval, test_statistic_list = between_subject_test(X_data, y_data, method="regression", Nperm=1000,
                                                          confounds=None, exchangeable=True, test_statistic_option=True)
         print("P-values:", pval)
         print("Test Statistics:", test_statistic_list)
@@ -96,8 +96,8 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
         # Get the number of trials per subject
         idx_trial = np.arange(0, trial_per_subject[0] * len(n_trial_subject), trial_per_subject[0])
 
-    n_timepoints, n_ST, n_features, data_type, X_data, D_data = get_input_shape(X_data, D_data)
-    n_predictions = D_data.shape[-1]
+    n_timepoints, n_ST, n_features, X_data, y_data = get_input_shape(X_data, y_data)
+    n_predictions = y_data.shape[-1]
 
 
     # Initialize arrays based on shape of data shape and defined options
@@ -105,7 +105,7 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
 
     for t in tqdm(range(n_timepoints)) if n_timepoints > 1 else range(n_timepoints):
         # Create test_statistic and pval_perms based on method
-        test_statistic, pval_perms, proj = initialize_permutation_matrices(method, Nperm, n_features, n_predictions, D_data[t, :])
+        test_statistic, pval_perms, proj = initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_data[t, :])
 
         # If confounds exist, perform confound regression
         X_t = calculate_X_t(X_data[t, :], confounds)
@@ -117,7 +117,7 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
         for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
             # Perform permutation on X_t
             Xin = X_t[permute_idx_list[perm]]
-            test_statistic, pval_perms = test_statistic_calculations(Xin, D_data[t, :], perm, pval_perms, test_statistic, proj, method)
+            test_statistic, pval_perms = test_statistic_calculations(Xin, y_data[t, :], perm, pval_perms, test_statistic, proj, method)
 
         pval, corr_coef = get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef)
         # Output test statistic if it is set to True can be hard for memory otherwise
@@ -125,7 +125,10 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
             test_statistic_list[t,:] = test_statistic
             #  if pval_perms is empty (evaluates to False), the right-hand side of the assignment will be pval_list[t, :] itself, meaning that the array will remain unchanged.
             pval_list[t, :] = pval_perms if np.any(pval_perms) else pval_list[t, :]
-        
+    pval =np.squeeze(pval)
+    corr_coef =np.squeeze(corr_coef)   
+    test_statistic_list =np.squeeze(test_statistic_list)   
+    pval_list =np.squeeze(pval_list)      
     # Return values if test_statistic_option== True
     if test_statistic_option == True and method =="regression":   
         return pval, test_statistic_list
@@ -141,10 +144,10 @@ def between_subject_test(X_data, D_data, idx_data=None, method="regression", Npe
         return pval, corr_coef
 
 
-def within_session_between_trial_test(X_data, D_data, idx_data, method="regression", Nperm=1000, confounds=None,test_statistic_option=False):
+def within_session_between_trial_test(X_data, y_data, idx_data, method="regression", Nperm=1000, confounds=None,test_statistic_option=False):
     """
     This function conducts statistical tests (regression, correlation, or correlation_com) between two datasets, `X_data`
-    representing the measured data  and `D_data` representing the dependent-variable/Design-matrix, within a session across different
+    representing the measured data  and `y_data` representing the dependent-variable, within a session across different
     trials using permutation testing. The goal is to assess the statistical significance of relationships between brain
     activity and the dependent variable within the same session but across different trials.
 
@@ -158,7 +161,7 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
                                 represents timepoints, the second dimension represents the number of subjects or trials, 
                                 and the third dimension represents features. 
                                 In the latter case, permutation testing is performed per timepoint for each subject.              
-        D_data (numpy.ndarray): The dependent-variable or Design-matrix that can be either a 2D array or a 3D array. 
+        y_data (numpy.ndarray): The dependent-variable can be either a 2D array or a 3D array. 
                                 For 2D array, it got a shape of (n_ST, n_predictions), where n_ST represent 
                                 the number of subjects or trials, and each column represents a dependent variable
                                 For a 3D array,it got a shape (n_timepoints, n_ST, n_predictions), where the first dimension 
@@ -193,13 +196,13 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
     Note:
         - The function automatically determines whether permutation testing is performed per timepoint for each subject or
           for the whole data based on the dimensionality of `X_data`.
-        - The function assumes that the number of rows in `X_data` and `D_data` are equal
+        - The function assumes that the number of rows in `X_data` and `y_data` are equal
                                 
     Example:
         X_data = np.random.rand(100, 3)  # Simulated brain activity data (3 features)
-        D_data = np.random.rand(100, 1)  # Simulated dependent variable data (1 variable)
+        y_data = np.random.rand(100, 1)  # Simulated dependent variable data (1 variable)
         idx_data = np.array([[0, 49], [50, 99]])  # Two trials within the session
-        pval, test_statistic_list = within_session_between_trial_test(X_data, D_data, idx_data, method="correlation",
+        pval, test_statistic_list = within_session_between_trial_test(X_data, y_data, idx_data, method="correlation",
                                                                      Nperm=1000, confounds=None,
                                                                      test_statistic_option=True)
         print("P-values:", pval)
@@ -211,8 +214,8 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
     check_value_error(method in valid_methods, "Invalid option specified for 'method'. Must be one of: " + ', '.join(valid_methods))
 
     # Get input shape information
-    n_timepoints, n_ST, n_features, data_type, X_data, D_data = get_input_shape(X_data, D_data)
-    n_predictions = D_data.shape[-1]
+    n_timepoints, n_ST, n_features, X_data, y_data = get_input_shape(X_data, y_data)
+    n_predictions = y_data.shape[-1]
     
     # Get indices for permutation
     if len(idx_data.shape)==2:
@@ -225,7 +228,7 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
 
     for t in tqdm(range(n_timepoints)) if n_timepoints > 1 else range(n_timepoints):
         # Create test_statistic and pval_perms based on method
-        test_statistic, pval_perms, proj = initialize_permutation_matrices(method, Nperm, n_features, n_predictions, D_data[t, :])
+        test_statistic, pval_perms, proj = initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_data[t, :])
 
         # If confounds exist, perform confound regression
         X_t = calculate_X_t(X_data[t, :], confounds)
@@ -234,14 +237,17 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
         for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
             # Perform permutation on X_t
             Xin = within_session_between_trial(X_t, idx_array, perm)
-            test_statistic, pval_perms = test_statistic_calculations(Xin, D_data[t, :], perm, pval_perms, test_statistic, proj, method)
+            test_statistic, pval_perms = test_statistic_calculations(Xin, y_data[t, :], perm, pval_perms, test_statistic, proj, method)
 
         pval, corr_coef = get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef)
         if test_statistic_option==True:
             test_statistic_list[t,:] = test_statistic
             #  if pval_perms is empty (evaluates to False), the right-hand side of the assignment will be pval_list[t, :] itself, meaning that the array will remain unchanged.
             pval_list[t, :] = pval_perms if np.any(pval_perms) else pval_list[t, :]
-        
+    pval =np.squeeze(pval)
+    corr_coef =np.squeeze(corr_coef)   
+    test_statistic_list =np.squeeze(test_statistic_list)   
+    pval_list =np.squeeze(pval_list)           
     # Return values if test_statistic_option== True
     if test_statistic_option == True and method =="regression":   
         return pval, test_statistic_list
@@ -257,19 +263,19 @@ def within_session_between_trial_test(X_data, D_data, idx_data, method="regressi
         return pval, corr_coef
    
 
-def within_session_continuous_test(vpath_data, D_data, n_states, method="regression", Nperm=1000, test_statistic_option=False):
+def within_session_continuous_test(vpath_data, y_data, n_states, method="regression", Nperm=1000, test_statistic_option=False):
     """
     Perform permutation testing within a session for continuous data.
 
     This function conducts statistical tests (regression, correlation, or correlation_com) between a hidden state path
-    (`vpath_data`) and a dependent variable (`D_data`) within each session using permutation testing. The goal is to
+    (`vpath_data`) and a dependent variable (`y_data`) within each session using permutation testing. The goal is to
     assess the statistical significance of relationships between the hidden state path and the dependent variable.
 
     Args:
         vpath_data (numpy.ndarray): The hidden state path data. It could be a 2D array where each row represents a
                                     timepoint and each column represents a state variable of shape (n_timepoints, n_states) 
                                     or a 1D array of of shape (n_timepoints,) where each row value represent a giving state.        
-        D_data (numpy.ndarray): The dependent-variable or Design-matrix with a shape of (n_ST, n_predictions), where n_ST represent 
+        y_data (numpy.ndarray): The dependent-variable with a shape of (n_ST, n_predictions), where n_ST represent 
                         the number of subjects or trials, and each column represents a dependent variable
                         For a 3D array,it got a shape (n_timepoints, n_ST, n_predictions), where the first dimension 
                         represents trials for each timepoint and each column represents a dependent variable                 
@@ -292,13 +298,13 @@ def within_session_continuous_test(vpath_data, D_data, n_states, method="regress
                                 pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
 
     Note:
-        The function assumes that the number of rows in `vpath_data` and `D_data` are equal
+        The function assumes that the number of rows in `vpath_data` and `y_data` are equal
 
     Example:
         vpath_data = np.random.randint(1, 4, size=(100, 5))  # Simulated hidden state path data
-        D_data = np.random.rand(100, 3)  # Simulated dependent variable data
+        y_data = np.random.rand(100, 3)  # Simulated dependent variable data
         n_states = 5
-        pval, corr_coef, test_statistic_list, pval_list = within_session_continuous_test(vpath_data, D_data, n_states,
+        pval, corr_coef, test_statistic_list, pval_list = within_session_continuous_test(vpath_data, y_data, n_states,
                                                                                           method="correlation_com",
                                                                                           Nperm=1000,
                                                                                           test_statistic_option=True)
@@ -312,8 +318,8 @@ def within_session_continuous_test(vpath_data, D_data, n_states, method="regress
     check_value_error(method in valid_methods, "Invalid option specified for 'method'. Must be one of: " + ', '.join(valid_methods))
 
     # Get input shape information
-    n_timepoints, n_ST, n_features, data_type, vpath_data, D_data = get_input_shape(vpath_data, D_data)
-    n_predictions = D_data.shape[-1]
+    n_timepoints, n_ST, n_features, vpath_data, y_data = get_input_shape(vpath_data, y_data)
+    n_predictions = y_data.shape[-1]
 
     # Initialize arrays based on shape of data shape and defined options
     pval, corr_coef, test_statistic_list, pval_list = initialize_arrays(vpath_data, n_features, n_predictions,
@@ -324,12 +330,12 @@ def within_session_continuous_test(vpath_data, D_data, n_states, method="regress
     for t in tqdm(range(n_timepoints)) if n_timepoints > 1 else range(n_timepoints):
         # Create test_statistic and pval_perms based on method
         test_statistic, pval_perms, proj = initialize_permutation_matrices(method, Nperm, n_features, n_predictions,
-                                                                           D_data[t, :])
+                                                                           y_data[t, :])
 
         for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
             # Perform permutation on vpath
             vpath_surrogate = within_session_continuous_surrogate_state_time(vpath_data[t, :], n_states, perm)
-            test_statistic, pval_perms = test_statistic_calculations(vpath_surrogate, D_data[t, :], perm, pval_perms,
+            test_statistic, pval_perms = test_statistic_calculations(vpath_surrogate, y_data[t, :], perm, pval_perms,
                                                                      test_statistic, proj, method)
 
         pval, corr_coef = get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef)
@@ -338,7 +344,11 @@ def within_session_continuous_test(vpath_data, D_data, n_states, method="regress
             # If pval_perms is empty (evaluates to False), the right-hand side of the assignment will be pval_list[t, :]
             # itself, meaning that the array will remain unchanged.
             pval_list[t, :] = pval_perms if np.any(pval_perms) else pval_list[t, :]
-
+    pval =np.squeeze(pval)
+    corr_coef =np.squeeze(corr_coef)   
+    test_statistic_list =np.squeeze(test_statistic_list)   
+    pval_list =np.squeeze(pval_list)    
+    
     # Return values if test_statistic_option is True
     if test_statistic_option and method == "regression":
         return pval, test_statistic_list
@@ -368,49 +378,46 @@ def check_value_error(condition, error_message):
         raise ValueError(error_message)
 
 
-def get_input_shape(X_data, D_data):
+def get_input_shape(X_data, y_data):
     """
     Computes the input shape parameters for permutation testing.
 
     Args:
         X_data (numpy.ndarray): The input data array.
-        D_data (numpy.ndarray): The Design-Matrix array.
+        y_data (numpy.ndarray): The dependent variable.
 
     Returns:
         n_timepoints (int): The number of timepoints.
         n_ST (int): The number of subjects/trials.
         n_features (int): The number of features.
-        data_type (str): The type of data ("whole_timeseries" or "per_timepoint").
         X_data (numpy.ndarray): The updated input data array.
-        D_data (numpy.ndarray): The updated Design-Matrix array.
+        y_data (numpy.ndarray): The updated dependent variable.
     """
     # Get the input shape of the data and perform necessary expansions if needed
-    if D_data.ndim == 1:
-        D_data = np.expand_dims(D_data, axis=1)
+    if y_data.ndim == 1:
+        y_data = np.expand_dims(y_data, axis=1)
         
     if len(X_data.shape) == 2:
         # Performing permutation testing for the whole data
         print("performing permutation testing for whole data")
         X_data = np.expand_dims(X_data, axis=0)
-        D_data = np.expand_dims(D_data, axis=0)
+        y_data = np.expand_dims(y_data, axis=0)
         n_timepoints, n_ST, n_features = X_data.shape
-        data_type = "whole_timeseries"
         
     else:
         # Performing permutation testing per timepoint
         print("performing permutation testing per timepoint")
         n_timepoints, n_ST, n_features = X_data.shape
-        data_type = "per_timepoint"
         
-    if data_type == "per_timepoint":
-        # Tile the D_data if it doesn't match the number of timepoints in X_data
-        if D_data.shape[0] != X_data.shape[0]:
-            D_data = np.tile(D_data, (X_data.shape[0],1,1)) 
+
+        # Tile the y_data if it doesn't match the number of timepoints in X_data
+        if y_data.shape[0] != X_data.shape[0]:
+            y_data = np.tile(y_data, (X_data.shape[0],1,1)) 
         
-    return n_timepoints, n_ST, n_features, data_type, X_data, D_data
+    return n_timepoints, n_ST, n_features, X_data, y_data
 
 
-def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, D_data):
+def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_data):
     """
     Initializes the permutation matrices and projection matrix for permutation testing.
 
@@ -419,7 +426,7 @@ def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, D_
         Nperm (int): The number of permutations.
         n_features (int): The number of features.
         n_predictions (int): The number of predictions.
-        D_data (numpy.ndarray): The Design-Matrix array.
+        y_data (numpy.ndarray): The dependent variable.
 
     Returns:
         test_statistic (numpy.ndarray): The permutation array.
@@ -435,7 +442,7 @@ def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, D_
         test_statistic = np.zeros((Nperm, n_features))
         pval_perms = []
         regularization = 0.001
-        proj = np.linalg.inv(D_data.T.dot(D_data) + regularization * np.eye(D_data.shape[1])).dot(D_data.T)
+        proj = np.linalg.inv(y_data.T.dot(y_data) + regularization * np.eye(y_data.shape[1])).dot(y_data.T)
     return test_statistic, pval_perms, proj
 
 
@@ -694,13 +701,13 @@ def surrogate_viterbi_path(viterbi_path, n_states):
     return vpath_surrogate
 
 
-def test_statistic_calculations(Xin, D_data, perm, pval_perms, test_statistic, proj, method):
+def test_statistic_calculations(Xin, y_data, perm, pval_perms, test_statistic, proj, method):
     """
     Calculates the test_statistic array and pval_perms array based on the given data and method.
 
     Args:
         Xin (numpy.ndarray): The data array.
-        D_data (numpy.ndarray): The Design-Matrix array.
+        y_data (numpy.ndarray): The dependent variable.
         perm (int): The permutation index.
         pval_perms (numpy.ndarray): The p-value permutation array.
         test_statistic (numpy.ndarray): The permutation array.
@@ -713,18 +720,18 @@ def test_statistic_calculations(Xin, D_data, perm, pval_perms, test_statistic, p
     """
     if method == 'regression':
         beta = np.dot(proj, Xin)
-        test_statistic[perm,:] = np.sqrt(np.sum((D_data.dot(beta) - Xin) ** 2, axis=0))
+        test_statistic[perm,:] = np.sqrt(np.sum((y_data.dot(beta) - Xin) ** 2, axis=0))
     elif method == 'correlation':
-        corr_coef = np.corrcoef(Xin, D_data, rowvar=False)
+        corr_coef = np.corrcoef(Xin, y_data, rowvar=False)
         corr_matrix = corr_coef[:Xin.shape[1], Xin.shape[1]:]
         test_statistic[perm, :, :] = np.abs(corr_matrix)
     elif method == "correlation_com":
-        corr_coef = np.corrcoef(Xin, D_data, rowvar=False)
+        corr_coef = np.corrcoef(Xin, y_data, rowvar=False)
         corr_matrix = corr_coef[:Xin.shape[1], Xin.shape[1]:]
         pval_matrix = np.zeros(corr_matrix.shape)
         for i in range(Xin.shape[1]):
-            for j in range(D_data.shape[1]):
-                _, pval_matrix[i, j] = pearsonr(Xin[:, i], D_data[:, j])
+            for j in range(y_data.shape[1]):
+                _, pval_matrix[i, j] = pearsonr(Xin[:, i], y_data[:, j])
 
         test_statistic[perm, :, :] = np.abs(corr_matrix)
         pval_perms[perm, :, :] = pval_matrix
