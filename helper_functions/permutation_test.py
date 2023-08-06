@@ -167,17 +167,15 @@ def within_session_between_trial_test(X_data, y_data, idx_data, method="regressi
                                 For a 3D array,it got a shape (n_timepoints, n_ST, n_predictions), where the first dimension 
                                 represents timepoints, the second dimension represents the number of subjects or trials, 
                                 and the third dimension represents a dependent variable                    
-        idx_data (ndarray):     It can take index data of shape (n_trials, 2) indicating start and end indices of trials or 
-                                an 1D array of shape (n_ST,) where the indices are defined for each subject/trial .
-                                    Required if exchangeable=True. Defaults to None.     
+        idx_data (numpy.ndarray): The indices for each trial within the session. It should be a 2D array where each row
+                                  represents the start and end index for a trial.    
         method (str, optional): The statistical method to be used for the permutation test. Valid options are
                                 "regression", "correlation", or "correlation_com". (default: "regression").
         Nperm (int): Number of permutations to perform (default: 1000).
         confounds (numpy.ndarray or None, optional): 
                                 The confounding variables to be regressed out from the input data (X_data).
                                 If provided, the regression analysis is performed to remove the confounding effects. 
-                                (default: None):                               
-                                      
+                                (default: None):                                                              
         test_statistic_option (bool, optional): 
                                 If True, the function will return the test statistic for each permutation.
                                 (default: False) 
