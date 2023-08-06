@@ -133,12 +133,12 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
         ax.set_title(title_text, fontsize=14)
 
     # Set the x-axis ticks
-    ax.set_xticks(np.linspace(0, pval.shape[1]-1, steps).astype(int))
-    ax.set_xticklabels(np.linspace(0, pval.shape[1], steps).astype(int), rotation="horizontal", fontsize=10)
+    ax.set_xticks(np.linspace(0, pval.shape[1]-1, steps).astype(int)+0.5)
+    ax.set_xticklabels(np.linspace(1, pval.shape[1], steps).astype(int), rotation="horizontal", fontsize=10)
 
     # Set the y-axis ticks
-    ax.set_yticks(np.linspace(0, pval.shape[0]-1, steps).astype(int))
-    ax.set_yticklabels(np.linspace(0, pval.shape[0], steps).astype(int), rotation="horizontal", fontsize=10)
+    ax.set_yticks(np.linspace(0, pval.shape[0]-1, steps).astype(int)+0.5)
+    ax.set_yticklabels(np.linspace(1, pval.shape[0], steps).astype(int), rotation="horizontal", fontsize=10)
 
     # Create an axes on the right side of ax. The width of cax will be 5%
     # of ax and the padding between cax and ax will be fixed at 0.05 inch.
@@ -149,6 +149,7 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
 
     # Show the plot
     plt.show()
+
 
   
 def plot_histograms(test_statistic, title_text=""):
@@ -221,19 +222,19 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
 
     # Add labels and title to the plot
     if not title_text:
-        ax.set_title(f'Scatter Plot of P-values, alpha={alpha}', fontsize=14, fontname='serif')
+        ax.set_title(f'Scatter Plot of P-values, alpha={alpha}', fontsize=14)
     else:
-        ax.set_title(title_text, fontsize=14, fontname='serif')
+        ax.set_title(title_text, fontsize=14)
 
     if xlabel is None:
-        ax.set_xlabel('Index', fontsize=12, fontname='serif')
+        ax.set_xlabel('Index', fontsize=12)
     else:
-        ax.set_xlabel(xlabel, fontsize=12, fontname='serif')
+        ax.set_xlabel(xlabel, fontsize=12)
 
     if ylabel is None:
-        ax.set_ylabel('-log10(p-values)', fontsize=12, fontname='serif')
+        ax.set_ylabel('-log10(p-values)', fontsize=12)
     else:
-        ax.set_ylabel(ylabel, fontsize=12, fontname='serif')
+        ax.set_ylabel(ylabel, fontsize=12)
 
     # Add text labels for indices where the mask is True
     for i, m in enumerate(mask):
