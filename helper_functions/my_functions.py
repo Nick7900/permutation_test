@@ -184,7 +184,7 @@ def plot_histograms(test_statistic, title_text=""):
     plt.show()
 
 
-def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, ylabel=None, xlim_start =-0.1,ylim_start=0):
+def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, ylabel=None, xlim_start = 0.9,ylim_start=0):
     """
     Create a scatter plot to visualize p-values with labels indicating significant points.
 
@@ -206,9 +206,9 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
     """
 
     # Create a binary mask based on condition (values below alpha)
-    mask = p_values < alpha
+    mask = pval < alpha
 
-    # Create a hue p_values based on the mask (True/False values)
+    # Create a hue pval based on the mask (True/False values)
     hue = mask.astype(int)
 
     # Set the color palette and marker style
@@ -217,7 +217,7 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
 
     # Create a scatter plot with hue and error bars
     fig, ax = plt.subplots(figsize=(8, 6))
-    sns.scatterplot(x=np.arange(0, len(p_values)), y=-np.log10(p_values), hue=hue, style=hue,
+    sns.scatterplot(x=np.arange(0, len(pval))+1, y=-np.log10(pval), hue=hue, style=hue,
                     markers=markers, s=40, edgecolor='k', linewidth=1, ax=ax)
 
     # Add labels and title to the plot
@@ -239,14 +239,14 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
     # Add text labels for indices where the mask is True
     for i, m in enumerate(mask):
         if m:
-            ax.text(i, -np.log10(p_values[i]), str(i), ha='center', va='bottom', color='red', fontsize=10)
+            ax.text(i+1, -np.log10(pval[i]), str(i), ha='center', va='bottom', color='red', fontsize=10)
 
     # Adjust legend position and font size
     ax.legend(title="Significance", loc="upper right", fontsize=10, bbox_to_anchor=(1.25, 1))
 
     # Set axis limits to focus on the relevant data range
-    ax.set_xlim(xlim_start, len(p_values))
-    ax.set_ylim(ylim_start, np.max(-np.log10(p_values)) * 1.2)
+    ax.set_xlim(xlim_start, len(pval)+1)
+    ax.set_ylim(ylim_start, np.max(-np.log10(pval)) * 1.2)
 
     # Customize plot background and grid style
     sns.set_style("white")
