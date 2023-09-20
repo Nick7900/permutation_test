@@ -12,11 +12,13 @@ def create_folder(folder_name):
     """
     Create a folder/directory if it doesn't already exist.
 
-    Args:
-    - folder_name (str): Name of the folder/directory to be created.
+    Parameters:
+    --------------
+        folder_name (str): Name of the folder/directory to be created.
 
     Returns:
-    None
+    ----------  
+        None
 
     Example:
     create_folder("data_folder")
@@ -33,13 +35,15 @@ def load_files(data_folder, file_name, file_type, delimiter=' '):
     """
     Load files from a specified data folder.
 
-    Args:
+    Parameters:
+    --------------
     - data_folder (str): Path to the data folder or the file itself.
     - file_name (str): Name of the file.
     - file_type (str): Type of the file (.mat or .txt).
     - delimiter (str, optional): Delimiter used in case of a text file (default is ' ').
 
     Returns:
+    ----------  
     - If file_type is '.mat':
         - data (dict): Dictionary containing the loaded data from the .mat file.
         - var_name (str): Name of the variable in the .mat file.
@@ -79,7 +83,8 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
     """
     Plot a heatmap of p-values.
 
-    Args:
+    Parameters:
+    --------------
         pval (numpy.ndarray): The p-values data to be plotted.
         method (str): The method used for the permutation test. Should be one of 'regression', 'correlation', or 'correlation_com'.
         normalize_vals (bool, optional): If True, the data range will be normalized from 0 to 1. Default is True.
@@ -92,6 +97,7 @@ def plot_heatmap(pval, method, normalize_vals=True, figsize=(12, 7), steps=11, t
         ylabel (str, optional): Y-axis label. If not provided, default labels based on the method will be used.
 
     Returns:
+    ----------  
         None (Displays the heatmap plot).
 
     """
@@ -156,11 +162,13 @@ def plot_histograms(test_statistic, title_text=""):
     """
     Plot the histogram of the permutation mean with the observed statistic marked.
 
-    Args:
+    Parameters:
+    --------------
         test_statistic (numpy.ndarray): An array containing the permutation mean values.
         title_text (str, optional): Additional text to include in the title of the plot. Default is an empty string.
 
     Returns:
+    ----------  
         None: Displays the histogram plot.
 
     Example:
@@ -189,7 +197,8 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
     """
     Create a scatter plot to visualize p-values with labels indicating significant points.
 
-    Args:
+    Parameters:
+    --------------
         p_values (array-like): An array of p-values.
         alpha (float): Threshold for significance (default: 0.05)
         title_text (str, optional): The title text for the plot (default="").
@@ -199,6 +208,7 @@ def plot_scatter_with_labels(p_values, alpha=0.05, title_text="", xlabel=None, y
         ylim_start (float): start position of y-axis limits (default: -0.1)
 
     Returns:
+    ----------  
         None
 
     Note:
@@ -263,12 +273,14 @@ def get_pairs(n_subjects, T=None, test_type=None):
     """
     Generate pairs of indices for paired analysis.
 
-    Args:
+    Parameters:
+    --------------
     - n_subjects (int): Number of subjects.
     - T (int or None): Number of time points (for whole timeseries analysis).
     - test_type (str or None): Type of test being performed.
 
     Returns:
+    ----------  
     - pairs (ndarray): NumPy array representing the pairs of indices.
 
     Example:
@@ -302,13 +314,15 @@ def get_index_subjects(n_subjects, n_trials=None, test_type=None, n_timepoints=N
     """
     Generate indices of subjects for each time point.
 
-    Args:
+    Parameters:
+    --------------
     - n_subjects (int): Number of subjects.
     - n_trials (int or None): Number of trials (for whole timeseries analysis).
     - test_type (str or None): Type of test being performed.
     - n_timepoints (int or None): Number of time points.
 
     Returns:
+    ----------  
     - index_subjects (ndarray): NumPy array representing the indices of subjects for each time point.
 
     Example:
@@ -347,10 +361,12 @@ def get_concatenate_data(data_tmp):
     """
     Concatenates a list of 2D arrays along the first axis.
 
-    Args:
+    Parameters:
+    --------------
         data_tmp (list): List of 2D arrays to be concatenated.
 
     Returns:
+    ----------  
         numpy.ndarray: Concatenated data array.
 
     Raises:
@@ -374,11 +390,13 @@ def get_timestamp_indices(n_timestamps, n_subjects):
     """
     Generate indices of the timestamps for each subject in the data.
 
-    Args:
+    Parameters:
+    --------------
     - n_timestamps (int): Number of timestamps.
     - n_subjects (int): Number of subjects.
 
     Returns:
+    ----------  
     - indices (ndarray): NumPy array representing the indices of the timestamps for each subject.
 
     Example:
@@ -398,7 +416,8 @@ def pval_test(pval, method='fdr_bh', alpha = 0.05):
     """
     This function performs multiple thresholding and correction for a 2D numpy array of p-values.
 
-    Args:
+    Parameters:
+    --------------
     - pval: 2D numpy array of p-values.
     - method: method used for FDR correction. Default is 'fdr_bh'.
         bonferroni : one-step correction
@@ -415,6 +434,7 @@ def pval_test(pval, method='fdr_bh', alpha = 0.05):
     - alpha: significance level. Default is 0.05.
 
     Returns:
+    ----------  
     - p_values_corrected: 2D numpy array of corrected p-values.
     - rejected_corrected: 2D numpy array of boolean values indicating rejected null hypotheses.
     """
@@ -439,12 +459,14 @@ def compare_p_values(p_values, p_values_corrected, threshold=0.05):
     """
     Compare two arrays of p-values and identify the indices with similar and non-similar values.
 
-    Args:
+    Parameters:
+    --------------
         p_values (ndarray): Array of p-values.
         p_values_corrected (ndarray): Array of corrected p-values.
         threshold (float): Significance threshold.
 
     Returns:
+    ----------  
         similar_indices (ndarray): Indices with similar p-values below the threshold.
         not_similar_indices (ndarray): Indices with non-similar p-values below the threshold.
     """
