@@ -14,7 +14,8 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
     The goal is to assess the statistical significance of relationships the measured data and
     the dependent variable in a between-subject design.
 
-    Args:
+    Parameters:
+    --------------
         X_data (numpy.ndarray): Input data array of shape that can be either a 2D array or a 3D array.
                                 For 2D array, it got a shape of (n_ST, n_features), where n_ST represent 
                                 the number of subjects or trials, and each column represents a feature (e.g., brain
@@ -46,7 +47,8 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
                                 If True, the function will return the test statistic for each permutation.
                                 (default: False) 
                                 
-    Returns (numpy.ndarray or tuple: 
+    Returns:
+    ----------  
                                 Depending on the `test_statistic_option` and `method`, it can return the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
@@ -60,11 +62,6 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
           for the whole data based on the dimensionality of `X_data`.
         - The function assumes that the number of rows in `X_data` and `y_data` are equal
                                   
-    Returns:
-        pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
-        corr_coef (numpy array): Correlation Coefficients for the test n_timepoints, n_features, n_predictions) if method=="correlation or "correlation_com", else None.
-        test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) if test_statistic_option is True, else None.
-        pval_list (numpy array): P-values for each time point (n_timepoints, Nperm, n_features) if test_statistic_option is True and method is "correlation_com", else None.
         
     Example:
         X_data = np.random.rand(100, 3)  # Simulated brain activity data (3 features)
@@ -152,7 +149,8 @@ def within_session_between_trial_test(X_data, y_data, idx_data, method="regressi
     activity and the dependent variable within the same session but across different trials.
 
 
-    Args:
+    Parameters:
+    --------------
         X_data (numpy.ndarray): Input data array of shape that can be either a 2D array or a 3D array.
                                 For 2D array, it got a shape of (n_ST, n_features), where n_ST represent 
                                 the number of subjects or trials, and each column represents a feature (e.g., brain
@@ -182,7 +180,8 @@ def within_session_between_trial_test(X_data, y_data, idx_data, method="regressi
                                 
                                 
                                 
-    Returns (numpy.ndarray or tuple: 
+    Returns:
+    ----------  
                                 Depending on the `test_statistic_option` and `method`, it can return the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
@@ -269,7 +268,8 @@ def within_session_continuous_test(vpath_data, y_data, n_states, method="regress
     (`vpath_data`) and a dependent variable (`y_data`) within each session using permutation testing. The goal is to
     assess the statistical significance of relationships between the hidden state path and the dependent variable.
 
-    Args:
+    Parameters:
+    --------------
         vpath_data (numpy.ndarray): The hidden state path data. It could be a 2D array where each row represents a
                                     timepoint and each column represents a state variable of shape (n_timepoints, n_states) 
                                     or a 1D array of of shape (n_timepoints,) where each row value represent a giving state.        
@@ -287,7 +287,8 @@ def within_session_continuous_test(vpath_data, y_data, n_states, method="regress
                                 (default: None):     
                                 
                                 
-    Returns (numpy.ndarray or tuple: 
+    Returns:
+    ----------  
                                 Depending on the `test_statistic_option` and `method`, it can return the p-values, 
                                 correlation coefficients, test statistics.
                                 pval (numpy array): p-values for the test (n_timepoints, n_features) if method=="Regression", else (n_timepoints, n_features, n_predictions).
@@ -367,7 +368,8 @@ def check_value_error(condition, error_message):
     """
     Checks a given condition and raises a ValueError with the specified error message if the condition is not met.
 
-    Args:
+    Parameters:
+    --------------
         condition (bool): The condition to check.
         error_message (str): The error message to raise if the condition is not met.
     """
@@ -380,11 +382,13 @@ def get_input_shape(X_data, y_data):
     """
     Computes the input shape parameters for permutation testing.
 
-    Args:
+    Parameters:
+    --------------
         X_data (numpy.ndarray): The input data array.
         y_data (numpy.ndarray): The dependent variable.
 
     Returns:
+    ----------  
         n_timepoints (int): The number of timepoints.
         n_ST (int): The number of subjects/trials.
         n_features (int): The number of features.
@@ -419,7 +423,8 @@ def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_
     """
     Initializes the permutation matrices and projection matrix for permutation testing.
 
-    Args:
+    Parameters:
+    --------------
         method (str): The method to use for permutation testing.
         Nperm (int): The number of permutations.
         n_features (int): The number of features.
@@ -427,6 +432,7 @@ def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_
         y_data (numpy.ndarray): The dependent variable.
 
     Returns:
+    ----------  
         test_statistic (numpy.ndarray): The permutation array.
         pval_perms (numpy.ndarray): The p-value permutation array.
         proj (numpy.ndarray or None): The projection matrix (None for correlation methods).
@@ -448,7 +454,8 @@ def initialize_arrays(X_data, n_features, n_predictions, n_timepoints, method, N
     """
     Initializes the result arrays for permutation testing.
 
-    Args:
+    Parameters:
+    --------------
         X_data (numpy.ndarray): The input data array.
         n_features (int): The number of features.
         n_predictions (int): The number of predictions.
@@ -458,6 +465,7 @@ def initialize_arrays(X_data, n_features, n_predictions, n_timepoints, method, N
         test_statistic_option (bool): If True, return the test statistic values.
 
     Returns:
+    ----------  
         pval (numpy array): p-values for the test (n_timepoints, n_features) if test_statistic_option is False, else None.
         corr_coef (numpy array): Correlation coefficient for the test (n_timepoints, n_features, n_predictions) if method=correlation or method = correlation_com, else None.
         test_statistic_list (numpy array): Test statistic values (n_timepoints, Nperm, n_features) or (n_timepoints, Nperm, n_features, n_predictions) if method=correlation or method = correlation_com, else None.
@@ -504,11 +512,13 @@ def calculate_X_t(X_data, confounds=None):
     """
     Calculate the X_t array for permutation testing.
 
-    Args:
+    Parameters:
+    --------------
         X_data (numpy.ndarray): The input data array.
         confounds (numpy.ndarray or None): The confounds array (default: None).
 
     Returns:
+    ----------  
         numpy.ndarray: Calculated X_t array.
     """
     # Calculate the centered data matrix based on confounds (if provided)
@@ -524,13 +534,15 @@ def between_subject_indices(Nperm, X_t, indices=False, exchangeable=True):
     """
     Generates between-subject indices for permutation testing.
 
-    Args:
+    Parameters:
+    --------------
         Nperm (int): The number of permutations.
         X_t (numpy.ndarray): The preprocessed data array.
         indices (bool): Flag indicating whether to use specific indices (default: False).
         exchangeable (bool): Flag indicating whether to use exchangeable permutations (default: False).
 
     Returns:
+    ----------  
         permute_idx_list (numpy.ndarray): The between-subject indices array.
     """
     permute_idx_list = np.zeros((Nperm, X_t.shape[0]), dtype=int)
@@ -551,7 +563,8 @@ def get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef):
     """
     Computes p-values and correlation matrix for permutation testing.
 
-    Args:
+    Parameters:
+    --------------
         test_statistic (numpy.ndarray): The permutation array.
         pval_perms (numpy.ndarray): The p-value permutation array.
         Nperm (int): The number of permutations.
@@ -561,6 +574,7 @@ def get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef):
         corr_coef (numpy.ndarray): The correlation p-value array.
 
     Returns:
+    ----------  
         
         pval (numpy.ndarray): Updated updated p-value .
         corr_coef (numpy.ndarray): Updated correlation p-value arrays.
@@ -580,10 +594,12 @@ def get_indices_array(idx_data):
     """
     Generates an indices array based on given data indices.
 
-    Args:
+    Parameters:
+    --------------
         idx_data (numpy.ndarray): The data indices array.
 
     Returns:
+    ----------  
         idx_array (numpy.ndarray): The generated indices array.
     """
     # Get an array of indices based on the given idx_data ranges
@@ -598,12 +614,14 @@ def within_session_between_trial(X_t, idx_array, perm):
     """
     Generates within-session between-trial data based on given indices.
 
-    Args:
+    Parameters:
+    --------------
         X_t (numpy.ndarray): The preprocessed data array.
         idx_array (numpy.ndarray): The indices array.
         perm (int): The permutation index.
 
     Returns:
+    ----------  
         Xin (numpy.ndarray): The within-session between-trial data array.
     """
     # Perform within-session between-trial permutation based on the given indices
@@ -623,12 +641,14 @@ def within_session_continuous_surrogate_state_time(viterbi_path, n_states, perm)
     """
     Generates a surrogate state-time matrix based on a given Viterbi path.
 
-    Args:
+    Parameters:
+    --------------
     viterbi_path (numpy.ndarray): 1D array or 2D matrix containing the Viterbi path.
     n_states (int): Number of states in the hidden Markov model.
     perm (int): Number of permutations to generate surrogate state-time matrices.
 
     Returns:
+    ----------  
     numpy.ndarray: Surrogate state-time matrix as a 2D matrix representing the Viterbi path in each row.
     """
     if perm == 0:
@@ -645,11 +665,13 @@ def viterbi_path_to_stc(viterbi_path, n_states):
     """
     Convert Viterbi path to state-time matrix.
 
-    Args:
+    Parameters:
+    --------------
     viterbi_path (numpy.ndarray): 1D array or 2D matrix containing the Viterbi path.
     n_states (int): Number of states in the hidden Markov model.
 
     Returns:
+    ----------  
     numpy.ndarray: State-time matrix where each row represents a time point and each column represents a state.
     """
     stc = np.zeros((len(viterbi_path), n_states), dtype=int)
@@ -661,11 +683,13 @@ def surrogate_viterbi_path(viterbi_path, n_states):
     """
     Generate surrogate Viterbi path based on state-time matrix.
 
-    Args:
+    Parameters:
+    --------------
     viterbi_path (numpy.ndarray): 1D array or 2D matrix containing the Viterbi path.
     n_states (int): Number of states in the hidden Markov model.
 
     Returns:
+    ----------  
     numpy.ndarray: Surrogate Viterbi path as a 1D array representing the state indices.
     """
     if len(viterbi_path.shape) == 1:
@@ -703,7 +727,8 @@ def test_statistic_calculations(Xin, y_data, perm, pval_perms, test_statistic, p
     """
     Calculates the test_statistic array and pval_perms array based on the given data and method.
 
-    Args:
+    Parameters:
+    --------------
         Xin (numpy.ndarray): The data array.
         y_data (numpy.ndarray): The dependent variable.
         perm (int): The permutation index.
@@ -713,6 +738,7 @@ def test_statistic_calculations(Xin, y_data, perm, pval_perms, test_statistic, p
         method (str): The method used for permutation testing.
 
     Returns:
+    ----------  
         test_statistic (numpy.ndarray): Updated test_statistic array.
         pval_perms (numpy.ndarray): Updated pval_perms array.
     """
