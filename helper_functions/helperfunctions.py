@@ -484,3 +484,79 @@ def compare_p_values(p_values, p_values_corrected, threshold=0.05):
     not_similar_indices = np.setxor1d(significant_indices, significant_indices_corrected)
 
     return similar_indices, not_similar_indices
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+import seaborn as sns
+
+def plot_permutation_matrix(permute_idx_list, idx_data=None, figsize=(12, 7), title_text="", steps=11,
+                            annot=False, xlabel=None, ylabel=None, save_as_pdf=False, fig_title=None):
+    """
+    Generate a heatmap of a permutation matrix with optional color coding of index data intervals.
+
+    Parameters:
+        permute_idx_list (numpy.ndarray): The permutation matrix to be visualized.
+        idx_data (list of tuples, optional): List of index data intervals to be color-coded. Each interval should be a
+            tuple (start, end), where 'start' is the start index and 'end' is the end index.
+        figsize (tuple, optional): Figure size as a tuple (width, height).
+        title_text (str, optional): Title of the plot.
+        steps (int, optional): Number of steps for axis labels.
+        annot (bool, optional): Whether to annotate the heatmap cells with values.
+        xlabel (str, optional): Label for the x-axis.
+        ylabel (str, optional): Label for the y-axis.
+        save_as_pdf (bool, optional): Whether to save the figure as a PDF.
+        fig_title (str, optional): Title for the saved PDF file (if save_as_pdf is True).
+
+    Returns:
+        None
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+    # Define the color idx_data and colors
+    colors = ['#ff3333', '#99cc33', '#66ccff', 'orange', 'cyan', 'pink', '#ffff66', 'brown']
+
+    if idx_data is not None:
+        # Ensure each interval has a unique random color
+        if len(idx_data) > len(colors):
+            # Generate additional random colors
+            num_additional_colors = len(idx_data) - len(colors)
+            random_palette = sns.color_palette("husl", num_additional_colors)
+            colors.extend(random_palette)
+
+        new_colors = []
+        for i, interval in enumerate(idx_data):
+            start, end = interval
+            color = colors[i]
+            cmap_segment = LinearSegmentedColormap.from_list('cmap_segment', [color, 'black'], N=end - start + 1)
+            new_colors.extend(cmap_segment(np.linspace(0, 0.4, end - start + 1)))
+            
+        # Create the custom colormap with local gradients
+        cmap = ListedColormap(new_colors)
+
+
+    # Create a heatmap with the custom colormap and color-coded values
+    sns.heatmap(permute_idx_list, cmap=cmap, cbar=True, annot=annot)
+    # Flip the y-axis
+    plt.gca().invert_yaxis()
+
+    ax.set_xlabel('Nr. of Permutations' if xlabel is None else xlabel, fontsize=12)
+    ax.set_ylabel('Index array' if ylabel is None else ylabel, fontsize=12)
+    ax.set_title('Permutation matrix with Color-Coded idx_data' if not title_text else title_text, fontsize=14)
+
+    ax.set_xticks(np.linspace(0, permute_idx_list.shape[1] - 1, steps).astype(int) + 0.5)
+    ax.set_xticklabels(np.linspace(1, permute_idx_list.shape[1], steps).astype(int), rotation="horizontal", fontsize=10)
+
+    ax.set_yticks(np.linspace(0, permute_idx_list.shape[0] - 1, steps).astype(int) + 0.5)
+    ax.set_yticklabels(np.linspace(1, permute_idx_list.shape[0], steps).astype(int), rotation="horizontal", fontsize=10)
+
+    if idx_data is not None:
+        # Create a custom colorbar if idx_data is provided
+        colorbar = plt.gcf().axes[-1]
+        colorbar.set_yticks(idx_data[:, 0])
+        
+    # Save the figure as a PDF if the 'save_as_pdf' flag is True
+    if save_as_pdf:
+        plt.savefig('permutation_matrix.pdf' if fig_title is None else fig_title, format='pdf')
+    plt.show()
