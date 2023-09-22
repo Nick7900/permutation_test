@@ -108,12 +108,12 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
         X_t = calculate_X_t(X_data[t, :], confounds)
 
         # Get indices for permutation
-        permute_idx_list = between_subject_indices(Nperm, X_t, idx_trial, exchangeable)
+        permute_idx_list = between_subject_permutation(Nperm, X_t, idx_trial, exchangeable)
 
         #for perm in range(Nperm):
         for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
             # Perform permutation on X_t
-            Xin = X_t[permute_idx_list[perm]]
+            Xin = X_t[permute_idx_list[:,perm]]
             test_statistic, pval_perms = test_statistic_calculations(Xin, y_data[t, :], perm, pval_perms, test_statistic, proj, method)
 
         pval, corr_coef = get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef)
@@ -229,11 +229,13 @@ def within_session_between_trial_test(X_data, y_data, idx_data, method="regressi
 
         # If confounds exist, perform confound regression
         X_t = calculate_X_t(X_data[t, :], confounds)
-
+        # Calculate permutation matrix of X_t 
+        permute_idx_list = within_session_across_trial_permutation(Nperm,X_t, idx_array)
+        
         for perm in range(Nperm):
         #for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
             # Perform permutation on X_t
-            Xin = within_session_between_trial(X_t, idx_array, perm)
+            Xin = X_t[permute_idx_list[:,perm]]
             test_statistic, pval_perms = test_statistic_calculations(Xin, y_data[t, :], perm, pval_perms, test_statistic, proj, method)
 
         pval, corr_coef = get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef)
@@ -530,7 +532,7 @@ def calculate_X_t(X_data, confounds=None):
     return X_t
 
 
-def between_subject_indices(Nperm, X_t, indices=False, exchangeable=True):
+def between_subject_permutation(Nperm, X_t, indices=False, exchangeable=True):
     """
     Generates between-subject indices for permutation testing.
 
@@ -543,20 +545,20 @@ def between_subject_indices(Nperm, X_t, indices=False, exchangeable=True):
 
     Returns:
     ----------  
-        permute_idx_list (numpy.ndarray): The between-subject indices array.
+        permute_idx_list (numpy.ndarray): Permutation matrix of subjects it got a shape (n_ST, Nperm)
     """
-    permute_idx_list = np.zeros((Nperm, X_t.shape[0]), dtype=int)
+    permute_idx_list = np.zeros((X_t.shape[0],Nperm), dtype=int)
     for perm in range(Nperm):
         if perm == 0:
-            permute_idx_list[perm] = np.arange(X_t.shape[0])
+            permute_idx_list[:,perm] = np.arange(X_t.shape[0])
         elif perm > 0 and exchangeable==False:
             for t in range(np.diff(indices)[0]):
                 idx_t = [i + t for i in indices]
                 idx_t_perm = np.random.permutation(idx_t)
                 for i in range(len(idx_t_perm)):
-                    permute_idx_list[perm, :][idx_t[i]] = idx_t_perm[i]
+                    permute_idx_list[:,perm][idx_t[i]] = idx_t_perm[i]
         else:
-            permute_idx_list[perm] = np.random.permutation(X_t.shape[0])
+            permute_idx_list[:,perm] = np.random.permutation(X_t.shape[0])
     return permute_idx_list
 
 def get_pval(test_statistic, pval_perms, Nperm, method, t, pval, corr_coef):
@@ -610,31 +612,38 @@ def get_indices_array(idx_data):
     return idx_array
 
 
-def within_session_between_trial(X_t, idx_array, perm):
+def within_session_across_trial_permutation(Nperm, X_t, idx_array):
     """
-    Generates within-session between-trial data based on given indices.
+    Generates permutation matrix of within-session across-trial data based on given indices.
 
     Parameters:
     --------------
+        Nperm (int): The number of permutations.
         X_t (numpy.ndarray): The preprocessed data array.
         idx_array (numpy.ndarray): The indices array.
-        perm (int): The permutation index.
 
     Returns:
     ----------  
-        Xin (numpy.ndarray): The within-session between-trial data array.
+        permute_idx_list (numpy.ndarray): Permutation matrix of subjects it got a shape (n_ST, Nperm)
     """
     # Perform within-session between-trial permutation based on the given indices
-    if perm == 0:
-        Xin = X_t
-    else:
-        Xin = np.zeros(X_t.shape)
-        unique_indices = np.unique(idx_array)
-        for i in range(unique_indices.size):
-            X_index_subject = X_t[idx_array == unique_indices[i], :]
-            X_perm = np.random.permutation(X_index_subject.shape[0])
-            Xin[idx_array == unique_indices[i], :] = X_index_subject[X_perm, :]
-    return Xin
+    # Createing the permutation matrix
+    permute_idx_list = np.zeros((X_t.shape[0], Nperm), dtype=int)
+    for perm in range(Nperm):
+        if perm == 0:
+            permute_idx_list[:,perm] = np.arange(X_t.shape[0])
+        else:
+            unique_indices = np.unique(idx_array)
+            count = 0
+            for i in unique_indices:
+                if i ==0:
+                    count =count+X_t[idx_array == unique_indices[i], :].shape[0]
+                    permute_idx_list[0:count,perm]=np.random.permutation(np.arange(0,count))
+                else:
+                    idx_count=X_t[idx_array == unique_indices[i], :].shape[0]
+                    count =count+idx_count
+                    permute_idx_list[count-idx_count:count,perm]=np.random.permutation(np.arange(count-idx_count,count))
+    return permute_idx_list
 
 
 def within_session_continuous_surrogate_state_time(viterbi_path, n_states, perm):
