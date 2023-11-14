@@ -1,11 +1,13 @@
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import random
 from scipy.stats import pearsonr
 np.seterr(divide='ignore', invalid='ignore')
 
 
-def between_subject_test(X_data, y_data, idx_data=None, method="regression", Nperm=1000, permute_on ="x", confounds = None, exchangeable=True,test_statistic_option=False):
+def between_subject_test(X_data, y_data, method="regression", Nperm=1000, permute_on ="x", confounds = None, dict_fam = None ,test_statistic_option=False):
+    from palm_functions import palm_quickperms
     """
     Perform between-subject permutation testing.
     This function conducts statistical tests (regression, correlation, or correlation_com) between two datasets, `X_data`
@@ -30,25 +32,29 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
                                 For a 3D array,it got a shape (n_timepoints, n_ST, n_predictions), where the first dimension 
                                 represents timepoints, the second dimension represents the number of subjects or trials, 
                                 and the third dimension represents a dependent variable                    
-        idx_data (ndarray):     It can take index data of shape (n_trials, 2) indicating start and end indices of trials or 
-                                an 1D array of shape (n_ST,) where the indices are defined for each subject/trial .
-                                    Required if exchangeable=True. Defaults to None.     
         method (str, optional): The statistical method to be used for the permutation test. Valid options are
                                 "regression", "correlation", or "correlation_com". (default: "regression").                                               
         Nperm (int): Number of permutations to perform (default: 1000).
         permute_on (str, optional): Where to apply the permutation testing. This is useful if you want to permute on predictors (x) or dependent variables (y).
                                 Example 1: When to permute on predictors (x), known as the measurement data:
-                                Investigating whether specific brain regions (predictors) significantly contribute to explaining the cognitive performance of behavioral data (dependent variable).
+                                Investigating whether specific brain regions or HMM states (predictors) significantly contribute to explaining the cognitive performance of behavioral data (dependent variable).
                                 Example 2: When to permute on dependent variables (y), known as the behavioral measurement:
                                 You do that to find the overall effect of the dependent variable. This could be to find the general effect of a cognitive task (e.g. IQ) on overall brain activity (independent variables), irrespective of specific regions.
                                 Valid options are "x" and "y". (default: "x").                          
         confounds (numpy.ndarray or None, optional): 
                                 The confounding variables to be regressed out from the input data (X_data).
                                 If provided, the regression analysis is performed to remove the confounding effects. 
-                                (default: None):                               
-        exchangeable (bool, optional): If True, the function performs exchangeable permutation between subjects based
-                                       on the provided `idx_data`. (default: False).
-                                       
+                                (default: None):     
+        dict_fam (dict): 
+                                Dictionary containing family structure information.                          
+                                    -file_location (str): The file location of the family structure data in CSV format.
+                                    -M (numpy.ndarray, optional): The matrix of attributes, which is not typically required.
+                                                            Defaults to None.
+                                    -nP (int): The number of permutations to generate.
+                                    -CMC (bool, optional): A flag indicating whether to use the Conditional Monte Carlo method (CMC).
+                                                    Defaults to False.
+                                    -EE (bool, optional): A flag indicating whether to assume exchangeable errors, which allows permutation.
+                                                    Defaults to True.             
         test_statistic_option (bool, optional): 
                                 If True, the function will return the test statistic for each permutation.
                                 (default: False) 
@@ -77,7 +83,6 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
         print("P-values:", pval)
         print("Test Statistics:", test_statistic_list)
     """
-    
 
     # Check validity of method and data_type
     valid_methods = ["regression", "correlation", "correlation_com"]
@@ -89,28 +94,13 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
     valid_permutations = ["x", "y"]
     check_value_error(permute_on in valid_permutations, "Invalid option specified for 'permutation_on'. Must be one of: " + ', '.join(valid_methods))
     
-    # idx_trial is by default None
-    idx_trial = None
-    if exchangeable==False:
-        if idx_data is None:
-            raise ValueError("Warning: Indices for each subject are not provided, prohibiting permutation between subjects when exchangeable is False.")
-        # Get indices for permutation
-        if len(idx_data.shape)==1:
-            n_trial_subject, trial_per_subject = np.unique(idx_data, return_counts=True)
-            if len(set(trial_per_subject)) != 1:
-                raise ValueError("Warning: Unequal number of trials per subject prohibs permutation between subjects when exchangeable is False.")
-            # Get the number of trials per subject
-            idx_trial = np.arange(0, trial_per_subject[0] * len(n_trial_subject), trial_per_subject[0])
-        else:
-            # Now the shape is 2
-            if len(set(np.diff(idx_data))) != 1:
-                raise ValueError("Warning: Unequal number of trials per subject prohibs permutation between subjects when exchangeable is False.")
-            # Get the number of trials per subject
-            idx_trial = idx_data[:,0]
-        
+    # Get the shapes of the data
     n_timepoints, n_ST, n_features, X_data, y_data = get_input_shape(X_data, y_data)
     n_predictions = y_data.shape[-1]
-
+    
+    # Crate the family structure 
+    if dict_fam is not None:
+        dict_mfam=fam_dict(dict_fam, Nperm) # modified dictionary of family structure
 
     # Initialize arrays based on shape of data shape and defined options
     pval, corr_coef, test_statistic_list, pval_list = initialize_arrays(X_data, n_features, n_predictions, n_timepoints, method, Nperm, test_statistic_option)
@@ -123,8 +113,14 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
         # Create test_statistic and pval_perms based on method
         test_statistic, pval_perms, proj = initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_t)
 
-        # Get indices for permutation
-        permute_idx_list = between_subject_permutation(Nperm, X_t, idx_trial, exchangeable)
+        if dict_fam is None:
+            # Get indices for permutation
+            permute_idx_list = between_subject_permutation(Nperm, X_t)
+        else:
+            permute_idx_list = palm_quickperms(dict_mfam["EB"], M=dict_mfam["M"], nP=dict_mfam["nP"], 
+                                               CMC=dict_mfam["CMC"], EE=dict_mfam["EE"])
+            # Need to convert the index so it starts from 0
+            permute_idx_list = permute_idx_list-1
 
         #for perm in range(Nperm):
         for perm in tqdm(range(Nperm)) if n_timepoints == 1 else range(n_timepoints):
@@ -145,11 +141,11 @@ def between_subject_test(X_data, y_data, idx_data=None, method="regression", Npe
     pval_list =np.squeeze(pval_list)      
     # Return values if test_statistic_option== True
     if test_statistic_option == True and method =="regression":   
-        return pval, test_statistic_list, permute_idx_list
+        return pval, test_statistic_list
     elif test_statistic_option == True and method =="correlation":   
-        return corr_coef, test_statistic_list, permute_idx_list
+        return corr_coef, test_statistic_list
     elif test_statistic_option == True and method =="correlation_com":   
-        return pval, corr_coef, test_statistic_list, pval_list, permute_idx_list
+        return pval, corr_coef, test_statistic_list, pval_list
     elif method =="regression":
         return pval
     elif method =="correlation":
@@ -189,7 +185,7 @@ def within_session_between_trial_test(X_data, y_data, idx_data, method="regressi
         Nperm (int): Number of permutations to perform (default: 1000).
         permute_on (str, optional): Where to apply the permutation testing. This is useful if you want to permute on predictors (x) or dependent variables (y).
                                 Example 1: When to permute on predictors (x), known as the measurement data:
-                                Investigating whether specific brain regions (predictors) significantly contribute to explaining the cognitive performance of behavioral data (dependent variable).
+                                Investigating whether specific brain regions or HMM states (predictors) significantly contribute to explaining the cognitive performance of behavioral data (dependent variable).
                                 Example 2: When to permute on dependent variables (y), known as the behavioral measurement:
                                 You do that to find the overall effect of the dependent variable. This could be to find the general effect of a cognitive task (e.g. IQ) on overall brain activity (independent variables), irrespective of specific regions.
                                 Valid options are "x" and "y". (default: "x").   
@@ -281,11 +277,11 @@ def within_session_between_trial_test(X_data, y_data, idx_data, method="regressi
     pval_list =np.squeeze(pval_list)           
     # Return values if test_statistic_option== True
     if test_statistic_option == True and method =="regression":   
-        return pval, test_statistic_list, permute_idx_list
+        return pval, test_statistic_list
     elif test_statistic_option == True and method =="correlation":   
-        return corr_coef, test_statistic_list, permute_idx_list
+        return corr_coef, test_statistic_list
     elif test_statistic_option == True and method =="correlation_com":   
-        return pval, corr_coef, test_statistic_list, pval_list, permute_idx_list
+        return pval, corr_coef, test_statistic_list, pval_list
     elif method =="regression":
         return pval
     elif method =="correlation":
@@ -324,7 +320,7 @@ def within_session_across_session_test(X_data, y_data, idx_data, method="regress
         Nperm (int): Number of permutations to perform (default: 1000).
         permute_on (str, optional): Where to apply the permutation testing. This is useful if you want to permute on predictors (x) or dependent variables (y).
                                 Example 1: When to permute on predictors (x), known as the measurement data:
-                                Investigating whether specific brain regions (predictors) significantly contribute to explaining the cognitive performance of behavioral data (dependent variable).
+                                Investigating whether specific brain regions or HMM states (predictors) significantly contribute to explaining the cognitive performance of behavioral data (dependent variable).
                                 Example 2: When to permute on dependent variables (y), known as the behavioral measurement:
                                 You do that to find the overall effect of the dependent variable. This could be to find the general effect of a cognitive task (e.g. IQ) on overall brain activity (independent variables), irrespective of specific regions.
                                 Valid options are "x" and "y". (default: "x").                   
@@ -420,11 +416,11 @@ def within_session_across_session_test(X_data, y_data, idx_data, method="regress
     pval_list =np.squeeze(pval_list)           
     # Return values if test_statistic_option== True
     if test_statistic_option == True and method =="regression":   
-        return pval, test_statistic_list, permute_idx_list
+        return pval, test_statistic_list
     elif test_statistic_option == True and method =="correlation":   
-        return corr_coef, test_statistic_list, permute_idx_list
+        return corr_coef, test_statistic_list
     elif test_statistic_option == True and method =="correlation_com":   
-        return pval, corr_coef, test_statistic_list, pval_list, permute_idx_list
+        return pval, corr_coef, test_statistic_list, pval_list
     elif method =="regression":
         return pval
     elif method =="correlation":
@@ -486,10 +482,10 @@ def within_session_continuous_test(vpath_data, y_data, n_states, method="regress
     """
     # Check validity of method
     valid_methods = ["regression", "correlation", "correlation_com"]
-    check_value_error(method in valid_methods, "Invalid option specified for 'method'. Must be one of: " + ', '.join(valid_methods))
+    check_value_error(val_method in valid_methods, "Invalid option specified for 'method'. Must be one of: " + ', '.join(valid_methods))
     # Check validity of method
     valid_permutations = ["x", "y"]
-    check_value_error(permute_on in valid_permutations, "Invalid option specified for 'permutation_on'. Must be one of: " + ', '.join(valid_methods))
+    check_value_error(permute_on in valid_permutations, "Invalid option specified for 'permutation_on'. Must be one of: " + ', '.join(valid_permutations))
     
     # Convert vpath from matrix to vector
     vpath_array=generate_vpath_1D(vpath_data)
@@ -530,11 +526,11 @@ def within_session_continuous_test(vpath_data, y_data, n_states, method="regress
     
     # Return values if test_statistic_option is True
     if test_statistic_option and method == "regression":
-        return pval, test_statistic_list, vpath_surrogate_list
+        return pval, test_statistic_list
     elif test_statistic_option and method == "correlation":
-        return corr_coef, test_statistic_list, vpath_surrogate_list
+        return corr_coef, test_statistic_list
     elif test_statistic_option and method == "correlation_com":
-        return pval, corr_coef, test_statistic_list, pval_list, vpath_surrogate_list
+        return pval, corr_coef, test_statistic_list, pval_list
     elif method == "regression":
         return pval
     elif method == "correlation":
@@ -605,6 +601,74 @@ def get_input_shape(X_data, y_data):
         
     return n_timepoints, n_ST, n_features, X_data, y_data
 
+def fam_dict(dict_fam, Nperm):
+    """
+    Process a dictionary containing family structure information.
+
+    Parameters:
+    --------------
+    - dict_fam (dict): Dictionary containing family structure information.
+        file_location (str): The file location of the family structure data in CSV format.
+        M (numpy.ndarray, optional): The matrix of attributes, which is not typically required.
+                                Defaults to None.
+        nP (int): The number of permutations to generate.
+        CMC (bool, optional): A flag indicating whether to use the Conditional Monte Carlo method (CMC).
+                          Defaults to False.
+        EE (bool, optional): A flag indicating whether to assume exchangeable errors, which allows permutation.
+                        Defaults to True.             
+    - Nperm (int): Number of permutations.
+
+    Returns:
+    ----------  
+    - dict_mfam (dict): Modified dictionary with processed values.
+        EB (numpy.ndarray): Block structure representing relationships between subjects.
+        M (numpy.ndarray, optional): The matrix of attributes, which is not typically required.
+                                Defaults to None.
+        nP (int): The number of permutations to generate.
+        CMC (bool, optional): A flag indicating whether to use the Conditional Monte Carlo method (CMC).
+                          Defaults to False.
+        EE (bool, optional): A flag indicating whether to assume exchangeable errors, which allows permutation.
+                        Defaults to True.
+
+
+    """
+    
+    # dict_fam: dictionary of family structure
+    # Nperm: number of permutations
+
+    default_values = {
+        'file_location' : 'None',
+        'M': 'None',
+        'CMC': 'False',
+        'EE': 'False',
+        'nP': Nperm
+    }
+    dict_mfam =dict_fam.copy()
+
+    # Validate and load family structure data
+    if 'file_location' not in dict_mfam:
+        raise ValueError("The 'file_location' variable must be defined in dict_fam.")
+    
+    # Convert the DataFrame to a matrix
+    EB = pd.read_csv(dict_mfam['file_location'], header=None).to_numpy()
+    
+    # Check for invalid keys in dict_fam
+    invalid_keys = set(dict_mfam.keys()) - set(default_values.keys())
+    if not invalid_keys== set():
+        valid_keys = ['M', 'CMC', 'EE']
+        check_value_error(
+            invalid_keys in valid_keys, "Invalid keys in dict_fam: Must be one of: " + ', '.join(valid_keys)
+        )
+    
+    # Set default values for M, CMC, and EE
+    del dict_mfam['file_location']
+    dict_mfam['EB'] = EB
+    dict_mfam['nP'] = Nperm
+    dict_mfam.setdefault('M', default_values['M'])
+    dict_mfam.setdefault('CMC', default_values['CMC'])
+    dict_mfam.setdefault('EE', default_values['EE'])
+    
+    return dict_mfam
 
 def initialize_permutation_matrices(method, Nperm, n_features, n_predictions, y_data):
     """
@@ -717,7 +781,7 @@ def calculate_X_t(X_data, confounds=None):
     return X_t
 
 
-def between_subject_permutation(Nperm, X_t, indices=False, exchangeable=True):
+def between_subject_permutation(Nperm, X_t):
     """
     Generates between-subject indices for permutation testing.
 
@@ -725,9 +789,7 @@ def between_subject_permutation(Nperm, X_t, indices=False, exchangeable=True):
     --------------
         Nperm (int): The number of permutations.
         X_t (numpy.ndarray): The preprocessed data array.
-        indices (bool): Flag indicating whether to use specific indices (default: False).
-        exchangeable (bool): Flag indicating whether to use exchangeable permutations (default: False).
-
+        
     Returns:
     ----------  
         permute_idx_list (numpy.ndarray): Permutation matrix of subjects it got a shape (n_ST, Nperm)
@@ -736,12 +798,6 @@ def between_subject_permutation(Nperm, X_t, indices=False, exchangeable=True):
     for perm in range(Nperm):
         if perm == 0:
             permute_idx_list[:,perm] = np.arange(X_t.shape[0])
-        elif perm > 0 and exchangeable==False:
-            for t in range(np.diff(indices)[0]):
-                idx_t = [i + t for i in indices]
-                idx_t_perm = np.random.permutation(idx_t)
-                for i in range(len(idx_t_perm)):
-                    permute_idx_list[:,perm][idx_t[i]] = idx_t_perm[i]
         else:
             permute_idx_list[:,perm] = np.random.permutation(X_t.shape[0])
     return permute_idx_list
